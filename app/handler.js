@@ -4,7 +4,7 @@ const loginUser = require("./service/auth/loginUser");
 const createUser = require("./service/user/createUser");
 
 module.exports.savvyApp = async (event, context, callback) => {
-  console.log(JSON.stringify(event));
+  // console.log(JSON.stringify(event));
   
   let response = "";
 
