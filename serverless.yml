@@ -1,0 +1,298 @@
+service: savvy-backend-admin
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: dev
+  region: us-east-1
+  memorySize: 128
+  environment:
+    user_pool_id: { Ref: UserPool }
+    client_id: { Ref: UserClient }
+    graphql_api_url: { Fn::GetAtt: [ GraphQlApi, GraphQLUrl ] }
+    identity_pool_id : {Ref: UserIdentityPool}
+    aws_region : {Ref: AWS::Region}
+    aws_iam_appsync_query_resource : !Join  
+      - ''
+      - - 'arn:aws:appsync'
+        - ':'
+        - !Ref AWS::Region
+        - ':'
+        - !Ref AWS::AccountId
+        - ':apis/'
+        - 'ptnde7airbg4rfm2pmltzg7dxm'
+        - '/types/Query/fields/'
+    aws_iam_appsync_mutation_resource : !Join  
+      - ''
+      - - 'arn:aws:appsync'
+        - ':'
+        - !Ref AWS::Region
+        - ':'
+        - !Ref AWS::AccountId
+        - ':apis/'
+        - 'ptnde7airbg4rfm2pmltzg7dxm'
+        - '/types/Mutation/fields/'
+    dynamodb_table: 'savvy'
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 'cognito-idp:AdminInitiateAuth'
+            - 'cognito-idp:AdminCreateUser'
+            - 'cognito-idp:AdminSetUserPassword'
+            - 'cognito-idp:AdminGetUser'
+            - 'cognito-idp:AdminConfirmSignUp'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:BatchWriteItem'
+            - 'dynamodb:UpdateItem'
+            - 'dynamodb:DeleteItem'
+            - 'dynamodb:GetItem'
+            - 'dynamodb:Query'
+            - 'dynamodb:Scan'
+            - 's3:PutObject'
+          Resource: "*"
+
+plugins:
+  - serverless-appsync-plugin
+
+functions:
+  savvyAdmin:
+    handler: app/handler.savvyApp
+    name: ${self:custom.projectName}_app_${sls:stage}
+
+  playground:
+    handler: graphql-playground/handler.playgroundHandler
+    name: ${self:custom.projectName}_playground_${sls:stage}
+    events:
+      - http:
+          path: playground
+          method: get
+          cors: true
+
+
+resources:
+  Resources:
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:custom.projectName}_${sls:stage}_cognito_user_pool
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+          - AttributeDataType: "String"
+            Name: "birth_year"
+            Required: false
+            Mutable: true
+          - AttributeDataType: "Boolean"
+            Name: "contract"
+            Required: false
+            Mutable: true
+          - AttributeDataType: "DateTime"
+            Name: "created_at"
+            Required: false
+            Mutable: true
+        UsernameAttributes:
+          - email
+        UsernameConfiguration:
+          CaseSensitive: false
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireNumbers: true
+        AutoVerifiedAttributes: ["email"]
+
+    UserClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:custom.projectName}_${sls:stage}_user_pool_client_id
+        GenerateSecret: false
+        UserPoolId: { Ref: UserPool }
+        AccessTokenValidity: 1
+        IdTokenValidity: 1
+        TokenValidityUnits:
+          AccessToken: "days"
+          IdToken: "days"
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+
+    UserIdentityPool:
+      Type: AWS::Cognito::IdentityPool
+      Properties: 
+        AllowClassicFlow: false
+        AllowUnauthenticatedIdentities: false
+        CognitoIdentityProviders: 
+          - ClientId: 
+              Ref: UserClient
+            ProviderName: 
+              Fn::GetAtt: [ "UserPool", "ProviderName" ]
+        IdentityPoolName: ${self:custom.projectName}_${sls:stage}
+
+    IdentityPoolRoleAttachment:
+      Type: AWS::Cognito::IdentityPoolRoleAttachment
+      Properties: 
+        IdentityPoolId: 
+          Ref: UserIdentityPool
+        RoleMappings:
+          "cognitoUserPoolConfig": 
+            IdentityProvider: !Join
+              - ''
+              - - 'cognito-idp'
+                - '.'
+                - Ref: AWS::Region
+                - '.'
+                - 'amazonaws.com'
+                - '/'
+                - Ref: UserPool
+                - ':'
+                - Ref: UserClient
+            AmbiguousRoleResolution: Deny 
+            Type: Token 
+        Roles:
+          "authenticated": !GetAtt [CognitoAuthRole, Arn]
+
+    CognitoAuthRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Federated: 'cognito-identity.amazonaws.com'
+              Action:
+                - 'sts:AssumeRoleWithWebIdentity'
+              Condition:
+                StringEquals:
+                  'cognito-identity.amazonaws.com:aud': !Ref UserIdentityPool
+                'ForAnyValue:StringLike':
+                  'cognito-identity.amazonaws.com:amr': authenticated
+        Policies:
+          - PolicyName: 'CognitoAuthorizedPolicy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'mobileanalytics:PutEvents'
+                    - 'cognito-sync:*'
+                    - 'cognito-identity:*'
+                  Resource: '*'
+
+    CognitoAdminAuthRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Federated: 'cognito-identity.amazonaws.com'
+              Action:
+                - 'sts:AssumeRoleWithWebIdentity'
+              Condition:
+                StringEquals:
+                  'cognito-identity.amazonaws.com:aud': !Ref UserIdentityPool
+                'ForAnyValue:StringLike':
+                  'cognito-identity.amazonaws.com:amr': authenticated
+        Policies:
+          - PolicyName: 'CognitoAdminAuthorizedPolicy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'appsync:GraphQL'
+                  Resource: 
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_query_resource}
+                      - 'getUserSecurityToken'
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                      - 'registerNewUser'                  
+        
+    UserPoolGroups:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: "admin will get all access"
+        GroupName: admin
+        RoleArn: !GetAtt [CognitoAdminAuthRole, Arn]
+        UserPoolId: 
+          Ref: UserPool
+
+    UserPoolUser:
+      Type: AWS::Cognito::UserPoolUser
+      Properties: 
+        # ClientMetadata: Json
+        DesiredDeliveryMediums: 
+          - EMAIL
+        # ForceAliasCreation: Boolean
+        MessageAction: SUPPRESS
+        UserAttributes: 
+          - Name: email
+            Value: "armanazad.sakib@gmail.com"
+        Username: "armanazad.sakib@gmail.com"
+        UserPoolId: 
+          Ref: UserPool
+        # ValidationData: 
+        #   - AttributeType
+
+    UserPoolUserToGroupAttachment:
+      Type: AWS::Cognito::UserPoolUserToGroupAttachment
+      Properties: 
+        GroupName: "admin"
+        Username: "armanazad.sakib@gmail.com"
+        UserPoolId: 
+          Ref: UserPool
+
+
+
+
+custom:
+  projectName: savvy_backend_admin
+  # customBucketName: savvy-backend-resource-bucket
+  appSync:
+    name: ${self:custom.projectName}_appsync
+    # authenticationType: API_KEY
+    authenticationType: AWS_IAM
+    additionalAuthenticationProviders:
+      - authenticationType: API_KEY
+      - authenticationType: AMAZON_COGNITO_USER_POOLS
+        userPoolConfig:
+          awsRegion: us-east-1
+          userPoolId: ${self:provider.environment.user_pool_id}
+    mappingTemplates:
+      - type: Query
+        field: loginUser
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+      - type: Query
+        field: getUserSecurityToken
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+      - type: Query
+        field: userRefreshToken
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+
+      - type: Mutation
+        field: registerNewUser
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+    dataSources:        
+      - type: AWS_LAMBDA
+        name: savvy_admin_appsync_data_source
+        config:
+          functionName: savvyAdmin

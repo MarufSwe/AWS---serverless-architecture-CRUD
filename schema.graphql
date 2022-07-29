@@ -1,0 +1,61 @@
+interface Attributes{
+  PK: String
+  SK: String
+  type: String
+  status: Boolean
+}
+
+type NotificationMessage @aws_api_key @aws_iam @aws_cognito_user_pools{
+	message: String
+}
+
+type UserIdentity @aws_iam @aws_api_key @aws_cognito_user_pools{
+	refreshToken: String
+	expiresIn: String
+	idToken: String
+	accessKeyId: String
+	secretKey: String
+	sessionToken: String
+	expiration: String
+}
+
+type Player implements Attributes{
+	PK: String
+	SK: String
+	type: String
+	status: Boolean
+	email: String
+	firstName: String
+	lastName: String
+	contract: String
+}
+
+type AdminUser {
+	status: Boolean
+	email: String
+	firstName: String
+	lastName: String
+}
+
+input CreateUserInput{
+	email: String!
+	password: String!
+	confirmPassword: String!
+	firstName: String
+	lastName: String
+}
+
+type Query {
+	loginUser(email: String!, password: String!): UserIdentity  @aws_api_key
+	getUserSecurityToken: UserIdentity
+	userRefreshToken: UserIdentity @aws_cognito_user_pools
+}
+
+type Mutation {
+	registerNewUser(input:CreateUserInput): NotificationMessage
+}
+
+schema {
+	query: Query
+	mutation: Mutation
+}
