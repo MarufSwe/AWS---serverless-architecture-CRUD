@@ -3,7 +3,7 @@ const Validator = require("validatorjs");
 const getCredentialsForIdentity = require('../cognito/getCredentialsForIdentity');
 const UserIdentity = require('../../model/UserIdentity');
 
-const getSessionTokenByIdentityId = async (headers,identity) => {
+const getIamUserIdentities = async (headers,identity) => {
   try{
     checkValidation(headers['x-id-token'] ?? '');
     const userIdentityCredential = await getCredentialsForIdentity(identity.cognitoIdentityId,headers['x-id-token']);
@@ -32,4 +32,4 @@ const checkValidation = (userIdToken) => {
   }
 };
 
-module.exports = getSessionTokenByIdentityId;
+module.exports = getIamUserIdentities;

@@ -2,7 +2,7 @@ const getCognitoIdentity = require('../cognito/getCognitoIdentity');
 const getCredentialsForIdentity = require('../cognito/getCredentialsForIdentity');
 const UserIdentity = require('../../model/UserIdentity');
 
-const getRefreshUserToken = async (headers) => {
+const getCognitoUserIdentities = async (headers) => {
 
   try{
     const userIdentityId = await getCognitoIdentity(headers.authorization);
@@ -14,4 +14,4 @@ const getRefreshUserToken = async (headers) => {
   
 };
 
-module.exports = getRefreshUserToken;
+module.exports = getCognitoUserIdentities;

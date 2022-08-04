@@ -1,4 +1,4 @@
-service: savvy-admin
+service: savvy-backend-admin
 
 frameworkVersion: "3"
 
@@ -22,7 +22,7 @@ provider:
         - ':'
         - !Ref AWS::AccountId
         - ':apis/'
-        - 'ptnde7airbg4rfm2pmltzg7dxm'
+        - 'j4rnbcxnajgnrp6zt4d47ilsqm'
         - '/types/Query/fields/'
     aws_iam_appsync_mutation_resource : !Join  
       - ''
@@ -32,7 +32,7 @@ provider:
         - ':'
         - !Ref AWS::AccountId
         - ':apis/'
-        - 'ptnde7airbg4rfm2pmltzg7dxm'
+        - 'j4rnbcxnajgnrp6zt4d47ilsqm'
         - '/types/Mutation/fields/'
     dynamodb_table: 'savvy'
   iam:
@@ -212,8 +212,12 @@ resources:
                   Resource: 
                   - !Join  
                     - ''
-                    - - ${self:provider.environment.aws_iam_appsync_query_resource}
-                      - 'getUserSecurityToken'
+                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                      - 'regenerateIamUserIdentities'
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                      - 'regenerateCognitoUserIdentities'
                   - !Join  
                     - ''
                     - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
@@ -254,6 +258,8 @@ resources:
           Ref: UserPool
 
 
+
+
 custom:
   projectName: savvy_admin
   # customBucketName: savvy-backend-resource-bucket
@@ -273,19 +279,19 @@ custom:
         dataSource: savvy_admin_appsync_data_source
         request: false
         response: false
-      - type: Query
-        field: getUserSecurityToken
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      - type: Query
-        field: userRefreshToken
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
 
       - type: Mutation
         field: registerNewUser
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+      - type: Mutation
+        field: regenerateIamUserIdentities
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+      - type: Mutation
+        field: regenerateCognitoUserIdentities
         dataSource: savvy_admin_appsync_data_source
         request: false
         response: false

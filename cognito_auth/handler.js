@@ -1,10 +1,10 @@
-const getRefreshUserToken = require("./service/auth/getRefreshUserToken");
-const getSessionTokenByIdentityId = require("./service/auth/getSessionTokenByIdentityId");
+const getCognitoUserIdentities = require("./service/auth/getCognitoUserIdentities");
+const getIamUserIdentities = require("./service/auth/getIamUserIdentities");
 const loginUser = require("./service/auth/loginUser");
 const createUser = require("./service/user/createUser");
 
 module.exports.adminAuth = async (event, context, callback) => {
-  // console.log(JSON.stringify(event));
+  console.log(JSON.stringify(event));
   
   let response = "";
 
@@ -16,11 +16,11 @@ module.exports.adminAuth = async (event, context, callback) => {
       case "loginUser":
         response = await loginUser(event.arguments);
         break;
-      case "getUserSecurityToken":
-        response = await getSessionTokenByIdentityId(event.request.headers,event.identity);
+      case "regenerateIamUserIdentities":
+        response = await getIamUserIdentities(event.request.headers,event.identity);
         break;
-      case "userRefreshToken":
-        response = await getRefreshUserToken(event.request.headers);
+      case "regenerateCognitoUserIdentities":
+        response = await getCognitoUserIdentities(event.request.headers);
         break;
       default:
         throw new CustomError(

@@ -47,12 +47,12 @@ input CreateUserInput{
 
 type Query {
 	loginUser(email: String!, password: String!): UserIdentity  @aws_api_key
-	getUserSecurityToken: UserIdentity
-	userRefreshToken: UserIdentity @aws_cognito_user_pools
 }
 
 type Mutation {
 	registerNewUser(input:CreateUserInput): NotificationMessage
+	regenerateCognitoUserIdentities: UserIdentity @aws_cognito_user_pools
+	regenerateIamUserIdentities: UserIdentity
 }
 
 schema {

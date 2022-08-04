@@ -100,3 +100,10 @@ If you want to delete your service, run serverless remove. This will delete all 
 Copied
 serverless remove
 serverless remove
+
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id us-east-1 \
+  --username armanazad.sakib@gmail.com \
+  --password cpl \
+  --permanent
