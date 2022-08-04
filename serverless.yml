@@ -1,4 +1,4 @@
-service: savvy-backend-admin
+service: savvy-admin
 
 frameworkVersion: "3"
 
@@ -22,7 +22,7 @@ provider:
         - ':'
         - !Ref AWS::AccountId
         - ':apis/'
-        - 'j4rnbcxnajgnrp6zt4d47ilsqm'
+        - 's2njaaeezzctfnqriv3htwoji4'
         - '/types/Query/fields/'
     aws_iam_appsync_mutation_resource : !Join  
       - ''
@@ -32,7 +32,7 @@ provider:
         - ':'
         - !Ref AWS::AccountId
         - ':apis/'
-        - 'j4rnbcxnajgnrp6zt4d47ilsqm'
+        - 's2njaaeezzctfnqriv3htwoji4'
         - '/types/Mutation/fields/'
     dynamodb_table: 'savvy'
   iam:
