@@ -3,7 +3,7 @@ const getSessionTokenByIdentityId = require("./service/auth/getSessionTokenByIde
 const loginUser = require("./service/auth/loginUser");
 const createUser = require("./service/user/createUser");
 
-module.exports.savvyApp = async (event, context, callback) => {
+module.exports.adminAuth = async (event, context, callback) => {
   // console.log(JSON.stringify(event));
   
   let response = "";

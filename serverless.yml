@@ -1,4 +1,4 @@
-service: savvy-backend-admin
+service: savvy-admin
 
 frameworkVersion: "3"
 
@@ -59,9 +59,9 @@ plugins:
   - serverless-appsync-plugin
 
 functions:
-  savvyAdmin:
-    handler: app/handler.savvyApp
-    name: ${self:custom.projectName}_app_${sls:stage}
+  savvyAdminAuth:
+    handler: cognito_auth/handler.adminAuth
+    name: ${self:custom.projectName}_auth_${sls:stage}
 
   playground:
     handler: graphql-playground/handler.playgroundHandler
@@ -254,10 +254,8 @@ resources:
           Ref: UserPool
 
 
-
-
 custom:
-  projectName: savvy_backend_admin
+  projectName: savvy_admin
   # customBucketName: savvy-backend-resource-bucket
   appSync:
     name: ${self:custom.projectName}_appsync
@@ -295,4 +293,4 @@ custom:
       - type: AWS_LAMBDA
         name: savvy_admin_appsync_data_source
         config:
-          functionName: savvyAdmin
+          functionName: savvyAdminAuth
