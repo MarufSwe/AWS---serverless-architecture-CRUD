@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.143.0",
     "aws-sdk": "^2.1087.0",
     "graphql-playground-middleware-lambda": "^1.7.24",
     "serverless-appsync-plugin": "^1.12.1",

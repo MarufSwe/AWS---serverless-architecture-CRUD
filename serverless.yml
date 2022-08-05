@@ -45,6 +45,7 @@ provider:
             - 'cognito-idp:AdminSetUserPassword'
             - 'cognito-idp:AdminGetUser'
             - 'cognito-idp:AdminConfirmSignUp'
+            - 'cognito-idp:AdminUserGlobalSignOut'
             - 'dynamodb:PutItem'
             - 'dynamodb:BatchWriteItem'
             - 'dynamodb:UpdateItem'
@@ -221,7 +222,11 @@ resources:
                   - !Join  
                     - ''
                     - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - 'registerNewUser'                  
+                      - 'refreshUserIdToken'
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                      - 'registerNewUser'              
         
     UserPoolGroups:
       Type: AWS::Cognito::UserPoolGroup
@@ -279,6 +284,11 @@ custom:
         dataSource: savvy_admin_appsync_data_source
         request: false
         response: false
+      - type: Query
+        field: logoutUser
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
 
       - type: Mutation
         field: registerNewUser
@@ -292,6 +302,11 @@ custom:
         response: false
       - type: Mutation
         field: regenerateCognitoUserIdentities
+        dataSource: savvy_admin_appsync_data_source
+        request: false
+        response: false
+      - type: Mutation
+        field: refreshUserIdToken
         dataSource: savvy_admin_appsync_data_source
         request: false
         response: false

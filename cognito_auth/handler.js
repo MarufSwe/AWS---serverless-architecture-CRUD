@@ -1,10 +1,12 @@
 const getCognitoUserIdentities = require("./service/auth/getCognitoUserIdentities");
 const getIamUserIdentities = require("./service/auth/getIamUserIdentities");
+const refreshUserIdToken = require("./service/auth/refreshUserIdToken");
 const loginUser = require("./service/auth/loginUser");
 const createUser = require("./service/user/createUser");
+const logoutUser = require("./service/auth/logoutUsre");
 
 module.exports.adminAuth = async (event, context, callback) => {
-  console.log(JSON.stringify(event));
+  // console.log(JSON.stringify(event));
   
   let response = "";
 
@@ -16,12 +18,18 @@ module.exports.adminAuth = async (event, context, callback) => {
       case "loginUser":
         response = await loginUser(event.arguments);
         break;
+      case "logoutUser":
+        response = await logoutUser(event.identity);
+        break;
       case "regenerateIamUserIdentities":
         response = await getIamUserIdentities(event.request.headers,event.identity);
         break;
       case "regenerateCognitoUserIdentities":
         response = await getCognitoUserIdentities(event.request.headers);
         break;
+      case "refreshUserIdToken":
+          response = await refreshUserIdToken(event.request.headers);
+          break;
       default:
         throw new CustomError(
           "GraphQlError",
