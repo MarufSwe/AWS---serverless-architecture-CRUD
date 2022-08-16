@@ -5,6 +5,18 @@ interface Attributes{
   status: Boolean
 }
 
+interface CommonAttributes{
+  PK: String
+  SK: String
+  type: String
+  status: Boolean
+  createdAt: String
+  deletedAt: String
+  updatedAt: String
+  createdBy: String
+  updatedBy: String
+}
+
 type NotificationMessage @aws_api_key @aws_iam @aws_cognito_user_pools{
 	message: String
 }
@@ -45,9 +57,53 @@ input CreateUserInput{
 	lastName: String
 }
 
+input MonthlyTimeTrialQuestionThemeInput{
+	themePrimaryKey: String
+	categoryPrimaryKey: String
+	backgroundImage: String
+	boardText: String
+	symbolImage: String
+}
+
+type MonthlyTimeTrialQuestionTheme implements CommonAttributes{
+	PK: String
+	SK: String
+	type: String
+	status: Boolean
+	createdAt: String
+	deletedAt: String
+	updatedAt: String
+	createdBy: String
+	updatedBy: String
+	title: String
+	backgroundImage: String
+	boardText: String
+	symbolImage: String
+	currentStatus: String
+}
+
+type LastEvaluatedKey{
+	categoryPrimaryKey: String,
+	themePrimaryKey: String,
+}
+
+type MonthlyTimeTrialQuestionThemePagination{
+	lastEvaluatedKey:LastEvaluatedKey
+	themeList: [MonthlyTimeTrialQuestionTheme]
+}
+
 type Query {
 	loginUser(email: String!, password: String!): UserIdentity  @aws_api_key
 	logoutUser: NotificationMessage @aws_cognito_user_pools
+
+	# monthly time trail question theme list
+	getMonthlyTimerTrialQuestionTheme(themePrimaryKey: String): MonthlyTimeTrialQuestionTheme
+	getMonthlyTimerTrialQuestionThemeList(
+		categoryPrimaryKey: String, 
+		themePrimaryKey: String, 
+		showingData: String,
+		title: String
+	): MonthlyTimeTrialQuestionThemePagination
 }
 
 type Mutation {
@@ -55,6 +111,10 @@ type Mutation {
 	regenerateCognitoUserIdentities: UserIdentity @aws_cognito_user_pools
 	regenerateIamUserIdentities: UserIdentity
 	refreshUserIdToken: UserIdentity @aws_api_key @aws_cognito_user_pools @aws_iam
+
+	# time trial monthly questions
+	createMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput):NotificationMessage
+	updateMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput): NotificationMessage
 }
 
 schema {

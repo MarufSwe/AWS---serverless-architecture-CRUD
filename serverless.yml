@@ -35,6 +35,7 @@ provider:
         - 's2njaaeezzctfnqriv3htwoji4'
         - '/types/Mutation/fields/'
     dynamodb_table: 'savvy'
+    bucket_cache: 'savvy-resource-bucket-caching'
   iam:
     role:
       statements:
@@ -53,7 +54,7 @@ provider:
             - 'dynamodb:GetItem'
             - 'dynamodb:Query'
             - 'dynamodb:Scan'
-            - 's3:PutObject'
+            - 's3:*'
           Resource: "*"
 
 plugins:
@@ -63,6 +64,10 @@ functions:
   savvyAdminAuth:
     handler: cognito_auth/handler.adminAuth
     name: ${self:custom.projectName}_auth_${sls:stage}
+
+  savvyAdminMonthlyTimeTrailQuestion:
+    handler: time_trial_question/controller/monthly/handler.monthlyHandler
+    name: ${self:custom.projectName}_${self:custom.monthlyTimeTrailQuestion}_${sls:stage}
 
   playground:
     handler: graphql-playground/handler.playgroundHandler
@@ -213,20 +218,28 @@ resources:
                   Resource: 
                   - !Join  
                     - ''
-                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - 'regenerateIamUserIdentities'
+                    - - ${self:provider.environment.aws_iam_appsync_query_resource}
+                      - '*'
                   - !Join  
                     - ''
                     - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - 'regenerateCognitoUserIdentities'
-                  - !Join  
-                    - ''
-                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - 'refreshUserIdToken'
-                  - !Join  
-                    - ''
-                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - 'registerNewUser'              
+                      - '*'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'regenerateCognitoUserIdentities'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'refreshUserIdToken'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'registerNewUser'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'createMonthlyTimerTrialQuestionTheme'           
         
     UserPoolGroups:
       Type: AWS::Cognito::UserPoolGroup
@@ -267,6 +280,7 @@ resources:
 
 custom:
   projectName: savvy_admin
+  monthlyTimeTrailQuestion: monthly_time_trial_question
   # customBucketName: savvy-backend-resource-bucket
   appSync:
     name: ${self:custom.projectName}_appsync
@@ -279,6 +293,7 @@ custom:
           awsRegion: us-east-1
           userPoolId: ${self:provider.environment.user_pool_id}
     mappingTemplates:
+      # authentication query configuration 
       - type: Query
         field: loginUser
         dataSource: savvy_admin_appsync_data_source
@@ -290,6 +305,7 @@ custom:
         request: false
         response: false
 
+      # authentication mutation configuration 
       - type: Mutation
         field: registerNewUser
         dataSource: savvy_admin_appsync_data_source
@@ -310,8 +326,37 @@ custom:
         dataSource: savvy_admin_appsync_data_source
         request: false
         response: false
+      
+      # time trail monthly theme query configuration 
+      - type: Query
+        field: getMonthlyTimerTrialQuestionTheme
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+      - type: Query
+        field: getMonthlyTimerTrialQuestionThemeList
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
+      # time trail monthly theme mutation configuration 
+      - type: Mutation
+        field: createMonthlyTimerTrialQuestionTheme
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+      - type: Mutation
+        field: updateMonthlyTimerTrialQuestionTheme
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
     dataSources:        
       - type: AWS_LAMBDA
         name: savvy_admin_appsync_data_source
         config:
           functionName: savvyAdminAuth
+      - type: AWS_LAMBDA
+        name: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        config:
+          functionName: savvyAdminMonthlyTimeTrailQuestion
