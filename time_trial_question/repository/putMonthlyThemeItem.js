@@ -12,7 +12,7 @@ const putMonthlyThemeItem = ({PK,type,lastCreatedThemeMonth,lastCreatedThemeYear
         TableName: process.env.dynamodb_table,
         Item:{
             PK:PK,
-            SK:`theme#${PK}#${themeMonth+1}-${themeYear}`,
+            SK:`theme#${PK}#${themeYear}-${((themeMonth+1)+'').padStart(2,'0')}`,
             status: true,
             type:`${type}theme`,
             currentStatus: 'waiting',
