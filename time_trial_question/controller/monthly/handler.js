@@ -7,7 +7,6 @@ const {
 const AppSyncExceptions = require("../../utils/AppSyncExceptions");
 
 module.exports.monthlyHandler = async (event, context, callback) => {
-    // console.log(event);
     try {
         let graphqlResponses = ""
 
@@ -28,8 +27,6 @@ module.exports.monthlyHandler = async (event, context, callback) => {
                 throw new AppSyncExceptions("InvalidGraphqlRequest","invalid graphql query or mutation");
                 break;
         }
-
-
         callback(
             null,
             typeof graphqlResponses.length === "undefined"

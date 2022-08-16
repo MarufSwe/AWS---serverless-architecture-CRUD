@@ -16,7 +16,7 @@ const putMonthlyThemeItem = ({PK,type,lastCreatedThemeMonth,lastCreatedThemeYear
             status: true,
             type:`${type}theme`,
             currentStatus: 'waiting',
-            title: `${themeYear}/${themeMonth}`,
+            title: `${themeYear}/${themeMonth+1}`,
             backgroundImage:backgroundImage,
             boardText:boardText,
             symbolImage:symbolImage,

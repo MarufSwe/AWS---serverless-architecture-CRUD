@@ -9,7 +9,7 @@ const putMonthlyThemeItem = require("../repository/putMonthlyThemeItem");
 const updateMonthlyCategoryItem = require("../repository/updateMonthlyCategoryItem");
 const getMonthlyThemeItem = require("../repository/getMonthlyThemeItem");
 const queryMonthlyThemeItem = require("../repository/queryMonthlyTheme");
-const scanCountItem = require("../repository/scanCountItem");
+const updateSubCategoryItem = require("../repository/updateSubCategoryItem");
 
 const DYNAMODB_CLIENT = new DynamoDBClient();
 const DYNAMODB_DOC_CLIENT = DynamoDBDocumentClient.from(DYNAMODB_CLIENT);
@@ -17,7 +17,7 @@ const DYNAMODB_DOC_CLIENT = DynamoDBDocumentClient.from(DYNAMODB_CLIENT);
 module.exports = {
     createMonthlyTimerTrialQuestionTheme: async ({ categoryPrimaryKey, backgroundImage, boardText, symbolImage, cognitoIdentityAuthProvider }) => {
         try {
-            checkValidation({categoryPrimaryKey, backgroundImage, boardText, symbolImage });
+            checkValidation({ categoryPrimaryKey, backgroundImage, boardText, symbolImage });
             const LOGGED_USER_UUID = getUserUUID(cognitoIdentityAuthProvider);
             const categoryItem = await DYNAMODB_DOC_CLIENT.send(getSubCategoryItem({ PK: categoryPrimaryKey }));
             checkEmptyRecord(categoryItem);
@@ -34,7 +34,7 @@ module.exports = {
             }));
 
             await DYNAMODB_DOC_CLIENT.send(
-                updateMonthlyCategoryItem({
+                updateSubCategoryItem({
                     PK: categoryPrimaryKey,
                     lastCreatedThemeMonth: categoryItem.Item.lastCreatedThemeMonth,
                     lastCreatedThemeYear: categoryItem.Item.lastCreatedThemeYear,
@@ -45,23 +45,23 @@ module.exports = {
             throw errors;
         }
     },
-    updateMonthlyTimerTrialQuestionTheme: async ({ themePrimaryKey, backgroundImage, boardText, symbolImage })=>{
+    updateMonthlyTimerTrialQuestionTheme: async ({ themePrimaryKey, backgroundImage, boardText, symbolImage }) => {
         try {
             checkValidation({
-                action:"update",
-                themePrimaryKey, 
-                backgroundImage, 
-                boardText, 
+                action: "update",
+                themePrimaryKey,
+                backgroundImage,
+                boardText,
                 symbolImage
             });
 
-            const splitThemePrimaryKey = themePrimaryKey.split("#"); 
+            const splitThemePrimaryKey = themePrimaryKey.split("#");
 
             await DYNAMODB_DOC_CLIENT.send(updateMonthlyCategoryItem({
-                PK : `${splitThemePrimaryKey[1] ?? ''}#${splitThemePrimaryKey[2] ?? ''}`,
-                SK : themePrimaryKey,
-                backgroundImage, 
-                boardText, 
+                PK: `${splitThemePrimaryKey[1] ?? ''}#${splitThemePrimaryKey[2] ?? ''}`,
+                SK: themePrimaryKey,
+                backgroundImage,
+                boardText,
                 symbolImage
             }));
 
@@ -73,13 +73,13 @@ module.exports = {
             throw errors
         }
     },
-    getMonthlyTimerTrialQuestionTheme: async ({ themePrimaryKey })=>{
+    getMonthlyTimerTrialQuestionTheme: async ({ themePrimaryKey }) => {
         try {
-            checkValidation({action:'get',themePrimaryKey})
-            const splitThemePrimaryKey = themePrimaryKey.split("#"); 
+            checkValidation({ action: 'get', themePrimaryKey })
+            const splitThemePrimaryKey = themePrimaryKey.split("#");
             const themeItem = await DYNAMODB_DOC_CLIENT.send(getMonthlyThemeItem({
                 PK: `${splitThemePrimaryKey[1] ?? ''}#${splitThemePrimaryKey[2] ?? ''}`,
-                SK:themePrimaryKey
+                SK: themePrimaryKey
             }));
             checkEmptyRecord(themeItem);
             return themeItem.Item;
@@ -87,20 +87,21 @@ module.exports = {
             throw errors
         }
     },
-    getMonthlyTimerTrialQuestionThemeList: async ({categoryPrimaryKey,themePrimaryKey,showingData,title})=>{
+    getMonthlyTimerTrialQuestionThemeList: async ({ categoryPrimaryKey, themePrimaryKey, showingData, title }) => {
         try {
+            checkValidation({ action: "query", categoryPrimaryKey, themePrimaryKey, showingData, title });
             const themeItemList = await DYNAMODB_DOC_CLIENT.send(queryMonthlyThemeItem({
-                PK:categoryPrimaryKey,
-                SK:themePrimaryKey,
-                Limit:parseInt(showingData),
+                PK: categoryPrimaryKey,
+                SK: themePrimaryKey,
+                Limit: parseInt(showingData),
                 ExclusiveStartKey: isEmptyCheck(themePrimaryKey) ? {
-                    PK:categoryPrimaryKey,
-                    SK:themePrimaryKey
-                }:null,
+                    PK: categoryPrimaryKey,
+                    SK: themePrimaryKey
+                } : null,
                 title
             }))
             return {
-                lastEvaluatedKey:{
+                lastEvaluatedKey: {
                     categoryPrimaryKey: themeItemList?.LastEvaluatedKey?.PK ?? null,
                     themePrimaryKey: themeItemList?.LastEvaluatedKey?.SK ?? null
                 },
@@ -112,25 +113,36 @@ module.exports = {
     }
 }
 
-const checkValidation = ({action=null,themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage }) => {
+const checkValidation = ({ action = null, themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage, showingData }) => {
 
     let validation = new Validator(
-        { themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage },
+        { themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage, showingData },
         (action === "update") || (action === "get") ? {
             themePrimaryKey: "required",
             categoryPrimaryKey: "",
+            showingData: "",
             backgroundImage: "url",
             boardText: "max:40",
             symbolImage: "url"
-        }:{
+        } : action === "query" ? {
             themePrimaryKey: "",
             categoryPrimaryKey: "required",
+            showingData: "required|integer",
+            backgroundImage: "url",
+            boardText: "max:40",
+            symbolImage: "url"
+        } : {
+            themePrimaryKey: "",
+            categoryPrimaryKey: "required",
+            showingData: "",
             backgroundImage: "required|url",
             boardText: "required|max:40",
             symbolImage: "required|url"
         },
         {
             "required.themePrimaryKey": "the theme primary key filed is required.",
+            "required.showingData": "the showing data filed is required.",
+            "integer.showingData": "the showing data filed must be number.",
             "required.categoryPrimaryKey": "the category primary key filed is required.",
             "required.backgroundImage": "the background image url filed is required.",
             "url.backgroundImage": "the background image url format is invalid.",

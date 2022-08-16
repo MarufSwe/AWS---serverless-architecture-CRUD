@@ -6,7 +6,8 @@ const queryMonthlyThemeItem = ({ PK, Limit, ExclusiveStartKey = null, title = nu
     let queryAttributes = {
         TableName: process.env.dynamodb_table,
         KeyConditionExpression: "#hashKey = :hashKey AND begins_with(#rangeKey, :rangeKey)",
-        ScanIndexForward: false,
+        ScanIndexForward: true,
+        ConsistentRead: true,
         Limit: Limit,
         ExpressionAttributeNames: {
             "#hashKey": 'PK',
