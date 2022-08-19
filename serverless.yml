@@ -215,6 +215,7 @@ resources:
                 - Effect: 'Allow'
                   Action:
                     - 'appsync:GraphQL'
+                    - 's3:PutObject'
                   Resource: 
                   - !Join  
                     - ''
@@ -224,6 +225,27 @@ resources:
                     - ''
                     - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
                       - '*'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/questionImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/questionImages/*.jpg'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeBackgroundImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeBackgroundImages/*.jpg'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeSymbolImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeSymbolImages/*.jpg'
+                  # - !Join
+                  #   - ''
+                  #   - - 'arn:aws:s3:::savvy-backend-resource-bucket/*.png'
                   # - !Join  
                   #   - ''
                   #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
@@ -339,6 +361,13 @@ custom:
         request: false
         response: false
 
+      # time trail monthly question query configuration
+      - type: Query
+        field: getMonthlyTimerTrialQuestion
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
       # time trail monthly theme mutation configuration 
       - type: Mutation
         field: createMonthlyTimerTrialQuestionTheme
@@ -347,6 +376,18 @@ custom:
         response: false
       - type: Mutation
         field: updateMonthlyTimerTrialQuestionTheme
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
+      # time trail monthly question mutation configuration 
+      - type: Mutation
+        field: createMonthlyTimerTrialQuestion
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+      - type: Mutation
+        field: updateMonthlyTimerTrialQuestion
         dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
         request: false
         response: false

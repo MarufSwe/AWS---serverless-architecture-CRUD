@@ -18,7 +18,8 @@ const queryMonthlyThemeItem = ({ PK, Limit, ExclusiveStartKey = null, title = nu
             ":rangeKey": 'theme#',
         },
         ReturnConsumedCapacity: "TOTAL",
-    }
+    };
+
     ExclusiveStartKey && (queryAttributes = { ...queryAttributes, ExclusiveStartKey });
 
     isEmptyCheck(title) && (
@@ -34,7 +35,7 @@ const queryMonthlyThemeItem = ({ PK, Limit, ExclusiveStartKey = null, title = nu
                 ":title": title,
             },
         }
-    )
+    );
 
     return new QueryCommand(queryAttributes);
 }

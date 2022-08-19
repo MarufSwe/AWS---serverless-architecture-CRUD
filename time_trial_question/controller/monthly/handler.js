@@ -1,3 +1,4 @@
+const { createMonthlyTimerTrialQuestion } = require("../../service/monthlyQuestionService");
 const { 
     createMonthlyTimerTrialQuestionTheme,
     updateMonthlyTimerTrialQuestionTheme, 
@@ -11,6 +12,8 @@ module.exports.monthlyHandler = async (event, context, callback) => {
         let graphqlResponses = ""
 
         switch (event.info.fieldName) {
+
+            // start monthly theme crud operations
             case "createMonthlyTimerTrialQuestionTheme":
                 graphqlResponses = await createMonthlyTimerTrialQuestionTheme({ ...event.arguments.input, ...event.identity });
                 break;
@@ -23,6 +26,23 @@ module.exports.monthlyHandler = async (event, context, callback) => {
             case "getMonthlyTimerTrialQuestionThemeList":
                 graphqlResponses = await getMonthlyTimerTrialQuestionThemeList({...event.arguments});
                 break;
+
+            
+            // start monthly question crud operations
+            case "createMonthlyTimerTrialQuestion":
+                await createMonthlyTimerTrialQuestion({...event.arguments.input, ...event.identity})
+                graphqlResponses = {message:"createMonthlyTimerTrialQuestion"};
+            case "updateMonthlyTimerTrialQuestion":
+                graphqlResponses = {message:"updateMonthlyTimerTrialQuestion"};
+                break;
+            case "getMonthlyTimerTrialQuestion":
+                graphqlResponses = {message:"getMonthlyTimerTrialQuestion"};
+                break;
+            // case "getMonthlyTimerTrialQuestionThemeList":
+            //     graphqlResponses = await getMonthlyTimerTrialQuestionThemeList({...event.arguments});
+            //     break;
+
+
             default:
                 throw new AppSyncExceptions("InvalidGraphqlRequest","invalid graphql query or mutation");
                 break;
