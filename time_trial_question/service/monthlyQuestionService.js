@@ -77,11 +77,21 @@ module.exports = {
         choiceB,
         choiceC,
         answer,
-        currentStatus,
-        cognitoIdentityAuthProvider
+        currentStatus
      }) => {
         try {
-            
+            checkValidationPutOrUpdate({  
+                action:"update",      
+                questionSortKey,
+                title,
+                questionText,
+                imageData,
+                choiceA,
+                choiceB,
+                choiceC,
+                answer,
+                currentStatus
+            });
             return {
                 message: "question updated successfully for monthly theme."
             }
