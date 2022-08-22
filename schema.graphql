@@ -17,6 +17,15 @@ interface CommonAttributes{
   updatedBy: String
 }
 
+interface PaginationAttributes{
+	perPage: Int
+	totalPage: Int
+	totalItem: Int,
+    currentPageNumber: Int,
+    from: Int,
+    to: Int
+}
+
 type NotificationMessage @aws_api_key @aws_iam @aws_cognito_user_pools{
 	message: String
 }
@@ -87,9 +96,14 @@ type LastEvaluatedKey{
 	themePrimaryKey: String,
 }
 
-type MonthlyTimeTrialQuestionThemePagination{
-	lastEvaluatedKey:LastEvaluatedKey
-	themeList: [MonthlyTimeTrialQuestionTheme]
+type MonthlyTimeTrialQuestionThemePagination implements PaginationAttributes{
+	perPage: Int
+	totalPage: Int
+	totalItem: Int,
+    currentPageNumber: Int,
+    from: Int,
+    to: Int
+	items: [MonthlyTimeTrialQuestionTheme]
 }
 
 type MonthlyTimeTrialQuestion implements CommonAttributes{
@@ -137,8 +151,8 @@ type Query {
 	getMonthlyTimerTrialQuestionTheme(themePrimaryKey: String): MonthlyTimeTrialQuestionTheme
 	getMonthlyTimerTrialQuestionThemeList(
 		categoryPrimaryKey: String, 
-		themePrimaryKey: String, 
-		showingData: String,
+		perPage: Int,
+		pageNumber: Int
 		title: String
 	): MonthlyTimeTrialQuestionThemePagination
 

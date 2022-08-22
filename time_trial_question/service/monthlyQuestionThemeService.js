@@ -87,62 +87,85 @@ module.exports = {
             throw errors
         }
     },
-    getMonthlyTimerTrialQuestionThemeList: async ({ categoryPrimaryKey, themePrimaryKey, showingData, title }) => {
+    getMonthlyTimerTrialQuestionThemeList: async ({ categoryPrimaryKey, perPage = 1, pageNumber = 1, title }) => {
         try {
-            checkValidation({ action: "query", categoryPrimaryKey, themePrimaryKey, showingData, title });
-            const themeItemList = await DYNAMODB_DOC_CLIENT.send(queryMonthlyThemeItem({
-                PK: categoryPrimaryKey,
-                SK: themePrimaryKey,
-                Limit: parseInt(showingData),
-                ExclusiveStartKey: isEmptyCheck(themePrimaryKey) ? {
+            checkValidation({ action: "query", categoryPrimaryKey, perPage, pageNumber, title });
+            let themeItemList, ExclusiveStartKey;
+            let paginatedItems = [];
+            do {
+                themeItemList = await DYNAMODB_DOC_CLIENT.send(queryMonthlyThemeItem({
                     PK: categoryPrimaryKey,
-                    SK: themePrimaryKey
-                } : null,
-                title
-            }))
-            return {
-                lastEvaluatedKey: {
-                    categoryPrimaryKey: themeItemList?.LastEvaluatedKey?.PK ?? null,
-                    themePrimaryKey: themeItemList?.LastEvaluatedKey?.SK ?? null
-                },
-                themeList: themeItemList.Items
+                    Limit: parseInt(perPage),
+                    ExclusiveStartKey: ExclusiveStartKey ?? null,
+                    title
+                }));
+                ExclusiveStartKey = themeItemList.LastEvaluatedKey;
+                paginatedItems = [...paginatedItems, ...themeItemList.Items];
+            } while (themeItemList.LastEvaluatedKey);
+
+            if(paginatedItems.length === 0){
+                throw new AppSyncExceptions('NotFoundException', 'woops! no record found.');
             }
+            else if (pageNumber > Math.ceil(paginatedItems.length / perPage)){
+                throw new AppSyncExceptions("ValidationExceptions", {
+                    errors:{
+                        "pageNumber":[
+                           "The given page number given is not valid."
+                        ]
+                    }
+                });
+            }
+            return {
+                perPage: perPage,
+                totalPage: Math.ceil(paginatedItems.length / perPage),
+                totalItem: paginatedItems.length,
+                currentPageNumber: pageNumber,
+                from: ((pageNumber - 1) * perPage) + 1,
+                to: ((pageNumber - 1) * perPage) + 1 === paginatedItems.length ? paginatedItems.length : pageNumber * perPage,
+                items: paginatedItems.slice(((pageNumber - 1) * perPage), pageNumber * perPage)
+            }
+
         } catch (errors) {
             throw errors
         }
+
     }
 }
 
-const checkValidation = ({ action = null, themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage, showingData }) => {
+const checkValidation = ({ action = null, themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage,perPage, pageNumber,title }) => {
 
     let validation = new Validator(
-        { themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage, showingData },
+        { themePrimaryKey, categoryPrimaryKey, backgroundImage, boardText, symbolImage,perPage, pageNumber, title },
         (action === "update") || (action === "get") ? {
             themePrimaryKey: "required",
             categoryPrimaryKey: "",
-            showingData: "",
             backgroundImage: "url",
             boardText: "max:40",
-            symbolImage: "url"
+            symbolImage: "url",
+            perPage: "integer|min:1",
+            pageNumber: "integer|min:1",
+            title:"",
         } : action === "query" ? {
             themePrimaryKey: "",
             categoryPrimaryKey: "required",
-            showingData: "required|integer",
             backgroundImage: "url",
             boardText: "max:40",
-            symbolImage: "url"
+            symbolImage: "url",
+            perPage: "integer|min:1",
+            pageNumber: "integer|min:1",
+            title:"string",
         } : {
             themePrimaryKey: "",
             categoryPrimaryKey: "required",
-            showingData: "",
             backgroundImage: "required|url",
             boardText: "required|max:40",
-            symbolImage: "required|url"
+            symbolImage: "required|url",
+            perPage: "integer|min:1",
+            pageNumber: "integer|min:1",
+            title:"",
         },
         {
             "required.themePrimaryKey": "the theme primary key filed is required.",
-            "required.showingData": "the showing data filed is required.",
-            "integer.showingData": "the showing data filed must be number.",
             "required.categoryPrimaryKey": "the category primary key filed is required.",
             "required.backgroundImage": "the background image url filed is required.",
             "url.backgroundImage": "the background image url format is invalid.",
@@ -150,6 +173,8 @@ const checkValidation = ({ action = null, themePrimaryKey, categoryPrimaryKey, b
             "max.boardText": "the board txt character is less than :max.",
             "required.symbolImage": "the symbol image url filed is required.",
             "url.symbolImage": "the symbol image url format is invalid.",
+            "min.perPage":"The per page must be at least :min.",
+            "min.pageNumber":"The page number must be at least :min."
         }
     );
 
