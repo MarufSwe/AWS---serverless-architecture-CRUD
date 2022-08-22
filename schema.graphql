@@ -13,14 +13,142 @@ input UpdateUser {
     PK: String
 }
 
+<<<<<<< HEAD
 type Delete {
     PK: String!
+=======
+interface PaginationAttributes{
+	perPage: Int
+	totalPage: Int
+	totalItem: Int,
+    currentPageNumber: Int,
+    from: Int,
+    to: Int
+}
+
+type NotificationMessage @aws_api_key @aws_iam @aws_cognito_user_pools{
+	message: String
+}
+
+type UserIdentity @aws_iam @aws_api_key @aws_cognito_user_pools{
+	refreshToken: String
+	expiresIn: String
+	idToken: String
+	accessKeyId: String
+	secretKey: String
+	sessionToken: String
+	expiration: String
+}
+
+type Player implements Attributes{
+	PK: String
+	SK: String
+	type: String
+	status: Boolean
+	email: String
+	firstName: String
+	lastName: String
+	contract: String
+}
+
+type AdminUser {
+	status: Boolean
+	email: String
+	firstName: String
+	lastName: String
+}
+
+input CreateUserInput{
+	email: String!
+	password: String!
+	confirmPassword: String!
+	firstName: String
+	lastName: String
+}
+
+input MonthlyTimeTrialQuestionThemeInput{
+	themePrimaryKey: String
+	categoryPrimaryKey: String
+	backgroundImage: String
+	boardText: String
+	symbolImage: String
+}
+
+type MonthlyTimeTrialQuestionTheme implements CommonAttributes{
+	PK: String
+	SK: String
+	type: String
+	status: Boolean
+	createdAt: String
+	deletedAt: String
+	updatedAt: String
+	createdBy: String
+	updatedBy: String
+	title: String
+	backgroundImage: String
+	boardText: String
+	symbolImage: String
+	currentStatus: String
+}
+
+type LastEvaluatedKey{
+	categoryPrimaryKey: String,
+	themePrimaryKey: String,
+}
+
+type MonthlyTimeTrialQuestionThemePagination implements PaginationAttributes{
+	perPage: Int
+	totalPage: Int
+	totalItem: Int,
+    currentPageNumber: Int,
+    from: Int,
+    to: Int
+	items: [MonthlyTimeTrialQuestionTheme]
+}
+
+type MonthlyTimeTrialQuestion implements CommonAttributes{
+	PK: String
+	SK: String
+	type: String
+	status: Boolean
+	createdAt: String
+	deletedAt: String
+	updatedAt: String
+	createdBy: String
+	updatedBy: String
+	title: String
+	questionText: String
+	imageData: String
+	choiceA: String
+	choiceB: String
+	choiceC: String
+	answer: String
+	currentStatus: String
+}
+
+input MonthlyTimeTrialQuestionInput{
+	categoryThemeSortKey: String
+	title: String
+	questionText: String
+	imageData: String
+	choiceA: String
+	choiceB: String
+	choiceC: String
+	answer: String
+	currentStatus: CurrentStatus
+}
+
+enum CurrentStatus {
+	Draft
+	Published
+>>>>>>> 4a26c2769771bc6f82765205418a721562b669f9
 }
 
 type Query {
     demoPythonApp(input: CreateUser): Message
 }
 
+<<<<<<< HEAD
 type Message {
 	message: String
 }
@@ -29,6 +157,34 @@ type Mutation {
     demoPythonApp(input: CreateUser): Message
     demoUpdatePythonApp(input: UpdateUser): Message
     deleteUser(PK: String!): Delete
+=======
+	# monthly time trail question theme list
+	getMonthlyTimerTrialQuestionTheme(themePrimaryKey: String): MonthlyTimeTrialQuestionTheme
+	getMonthlyTimerTrialQuestionThemeList(
+		categoryPrimaryKey: String, 
+		perPage: Int,
+		pageNumber: Int
+		title: String
+	): MonthlyTimeTrialQuestionThemePagination
+
+	# time trial monthly question
+	getMonthlyTimerTrialQuestion(questionSortKey: String): MonthlyTimeTrialQuestion
+}
+
+type Mutation {
+	registerNewUser(input:CreateUserInput): NotificationMessage
+	regenerateCognitoUserIdentities: UserIdentity @aws_cognito_user_pools
+	regenerateIamUserIdentities: UserIdentity
+	refreshUserIdToken: UserIdentity @aws_api_key @aws_cognito_user_pools @aws_iam
+
+	# time trial monthly theme
+	createMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput):NotificationMessage
+	updateMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput): NotificationMessage
+
+	# time trial monthly question
+	createMonthlyTimerTrialQuestion(input: MonthlyTimeTrialQuestionInput): NotificationMessage
+	updateMonthlyTimerTrialQuestion(input: MonthlyTimeTrialQuestionInput): NotificationMessage
+>>>>>>> 4a26c2769771bc6f82765205418a721562b669f9
 }
 
 schema {

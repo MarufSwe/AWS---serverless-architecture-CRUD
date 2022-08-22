@@ -42,6 +42,7 @@ resources:
     demo:
       Type: AWS::DynamoDB::Table
       Properties:
+<<<<<<< HEAD
         TableName: demoPythonApp
         AttributeDefinitions:
           - AttributeName: PK
@@ -56,6 +57,111 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+=======
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Principal:
+                Federated: 'cognito-identity.amazonaws.com'
+              Action:
+                - 'sts:AssumeRoleWithWebIdentity'
+              Condition:
+                StringEquals:
+                  'cognito-identity.amazonaws.com:aud': !Ref UserIdentityPool
+                'ForAnyValue:StringLike':
+                  'cognito-identity.amazonaws.com:amr': authenticated
+        Policies:
+          - PolicyName: 'CognitoAdminAuthorizedPolicy'
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'appsync:GraphQL'
+                    - 's3:PutObject'
+                  Resource: 
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_query_resource}
+                      - '*'
+                  - !Join  
+                    - ''
+                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                      - '*'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/questionImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/questionImages/*.jpg'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeBackgroundImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeBackgroundImages/*.jpg'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeSymbolImages/*.png'
+                  - !Join
+                    - ''
+                    - - 'arn:aws:s3:::savvy-backend-resource-bucket/timeTrialQuestion/monthly/themeSymbolImages/*.jpg'
+                  # - !Join
+                  #   - ''
+                  #   - - 'arn:aws:s3:::savvy-backend-resource-bucket/*.png'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'regenerateCognitoUserIdentities'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'refreshUserIdToken'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'registerNewUser'
+                  # - !Join  
+                  #   - ''
+                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
+                  #     - 'createMonthlyTimerTrialQuestionTheme'           
+        
+    UserPoolGroups:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: "admin will get all access"
+        GroupName: admin
+        RoleArn: !GetAtt [CognitoAdminAuthRole, Arn]
+        UserPoolId: 
+          Ref: UserPool
+
+    UserPoolUser:
+      Type: AWS::Cognito::UserPoolUser
+      Properties: 
+        # ClientMetadata: Json
+        DesiredDeliveryMediums: 
+          - EMAIL
+        # ForceAliasCreation: Boolean
+        MessageAction: SUPPRESS
+        UserAttributes: 
+          - Name: email
+            Value: "armanazad.sakib@gmail.com"
+        Username: "armanazad.sakib@gmail.com"
+        UserPoolId: 
+          Ref: UserPool
+        # ValidationData: 
+        #   - AttributeType
+
+    UserPoolUserToGroupAttachment:
+      Type: AWS::Cognito::UserPoolUserToGroupAttachment
+      Properties: 
+        GroupName: "admin"
+        Username: "armanazad.sakib@gmail.com"
+        UserPoolId: 
+          Ref: UserPool
+>>>>>>> 4a26c2769771bc6f82765205418a721562b669f9
 
 
 
@@ -86,6 +192,17 @@ custom:
         request: false
         response: false
 
+<<<<<<< HEAD
+=======
+      # time trail monthly question query configuration
+      - type: Query
+        field: getMonthlyTimerTrialQuestion
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
+      # time trail monthly theme mutation configuration 
+>>>>>>> 4a26c2769771bc6f82765205418a721562b669f9
       - type: Mutation
         field: demoUpdatePythonApp
         dataSource: create_demoPythonDataSource
@@ -97,7 +214,24 @@ custom:
         dataSource: create_demoPythonDataSource
         request: false
         response: false
+<<<<<<< HEAD
     dataSources:
+=======
+
+      # time trail monthly question mutation configuration 
+      - type: Mutation
+        field: createMonthlyTimerTrialQuestion
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+      - type: Mutation
+        field: updateMonthlyTimerTrialQuestion
+        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        request: false
+        response: false
+
+    dataSources:        
+>>>>>>> 4a26c2769771bc6f82765205418a721562b669f9
       - type: AWS_LAMBDA
         name: create_demoPythonDataSource
         config:
