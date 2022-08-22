@@ -1,120 +1,34 @@
-interface Attributes{
-  PK: String
-  SK: String
-  type: String
-  status: Boolean
+input CreateUser {
+    firstName: String
+    lastName: String
+    age: String
+    is_married: Boolean!
 }
 
-interface CommonAttributes{
-  PK: String
-  SK: String
-  type: String
-  status: Boolean
-  createdAt: String
-  deletedAt: String
-  updatedAt: String
-  createdBy: String
-  updatedBy: String
+input UpdateUser {
+    firstName: String
+    lastName: String
+    age: String
+    is_married: Boolean!
+    PK: String
 }
 
-type NotificationMessage @aws_api_key @aws_iam @aws_cognito_user_pools{
-	message: String
-}
-
-type UserIdentity @aws_iam @aws_api_key @aws_cognito_user_pools{
-	refreshToken: String
-	expiresIn: String
-	idToken: String
-	accessKeyId: String
-	secretKey: String
-	sessionToken: String
-	expiration: String
-}
-
-type Player implements Attributes{
-	PK: String
-	SK: String
-	type: String
-	status: Boolean
-	email: String
-	firstName: String
-	lastName: String
-	contract: String
-}
-
-type AdminUser {
-	status: Boolean
-	email: String
-	firstName: String
-	lastName: String
-}
-
-input CreateUserInput{
-	email: String!
-	password: String!
-	confirmPassword: String!
-	firstName: String
-	lastName: String
-}
-
-input MonthlyTimeTrialQuestionThemeInput{
-	themePrimaryKey: String
-	categoryPrimaryKey: String
-	backgroundImage: String
-	boardText: String
-	symbolImage: String
-}
-
-type MonthlyTimeTrialQuestionTheme implements CommonAttributes{
-	PK: String
-	SK: String
-	type: String
-	status: Boolean
-	createdAt: String
-	deletedAt: String
-	updatedAt: String
-	createdBy: String
-	updatedBy: String
-	title: String
-	backgroundImage: String
-	boardText: String
-	symbolImage: String
-	currentStatus: String
-}
-
-type LastEvaluatedKey{
-	categoryPrimaryKey: String,
-	themePrimaryKey: String,
-}
-
-type MonthlyTimeTrialQuestionThemePagination{
-	lastEvaluatedKey:LastEvaluatedKey
-	themeList: [MonthlyTimeTrialQuestionTheme]
+type Delete {
+    PK: String!
 }
 
 type Query {
-	loginUser(email: String!, password: String!): UserIdentity  @aws_api_key
-	logoutUser: NotificationMessage @aws_cognito_user_pools
+    demoPythonApp(input: CreateUser): Message
+}
 
-	# monthly time trail question theme list
-	getMonthlyTimerTrialQuestionTheme(themePrimaryKey: String): MonthlyTimeTrialQuestionTheme
-	getMonthlyTimerTrialQuestionThemeList(
-		categoryPrimaryKey: String, 
-		themePrimaryKey: String, 
-		showingData: String,
-		title: String
-	): MonthlyTimeTrialQuestionThemePagination
+type Message {
+	message: String
 }
 
 type Mutation {
-	registerNewUser(input:CreateUserInput): NotificationMessage
-	regenerateCognitoUserIdentities: UserIdentity @aws_cognito_user_pools
-	regenerateIamUserIdentities: UserIdentity
-	refreshUserIdToken: UserIdentity @aws_api_key @aws_cognito_user_pools @aws_iam
-
-	# time trial monthly questions
-	createMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput):NotificationMessage
-	updateMonthlyTimerTrialQuestionTheme(input: MonthlyTimeTrialQuestionThemeInput): NotificationMessage
+    demoPythonApp(input: CreateUser): Message
+    demoUpdatePythonApp(input: UpdateUser): Message
+    deleteUser(PK: String!): Delete
 }
 
 schema {

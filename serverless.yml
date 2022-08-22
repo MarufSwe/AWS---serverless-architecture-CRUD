@@ -1,52 +1,22 @@
-service: savvy-admin
+service: demoPythonApp
 
 frameworkVersion: "3"
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: python3.8
   stage: dev
   region: us-east-1
   memorySize: 128
   environment:
-    user_pool_id: { Ref: UserPool }
-    client_id: { Ref: UserClient }
     graphql_api_url: { Fn::GetAtt: [ GraphQlApi, GraphQLUrl ] }
-    identity_pool_id : {Ref: UserIdentityPool}
     aws_region : {Ref: AWS::Region}
-    aws_iam_appsync_query_resource : !Join  
-      - ''
-      - - 'arn:aws:appsync'
-        - ':'
-        - !Ref AWS::Region
-        - ':'
-        - !Ref AWS::AccountId
-        - ':apis/'
-        - 's2njaaeezzctfnqriv3htwoji4'
-        - '/types/Query/fields/'
-    aws_iam_appsync_mutation_resource : !Join  
-      - ''
-      - - 'arn:aws:appsync'
-        - ':'
-        - !Ref AWS::Region
-        - ':'
-        - !Ref AWS::AccountId
-        - ':apis/'
-        - 's2njaaeezzctfnqriv3htwoji4'
-        - '/types/Mutation/fields/'
-    dynamodb_table: 'savvy'
-    bucket_cache: 'savvy-resource-bucket-caching'
+    dynamodb_table: 'demoPythonApp'
   iam:
     role:
       statements:
         - Effect: 'Allow'
           Action:
-            - 'cognito-idp:AdminInitiateAuth'
-            - 'cognito-idp:AdminCreateUser'
-            - 'cognito-idp:AdminSetUserPassword'
-            - 'cognito-idp:AdminGetUser'
-            - 'cognito-idp:AdminConfirmSignUp'
-            - 'cognito-idp:AdminUserGlobalSignOut'
             - 'dynamodb:PutItem'
             - 'dynamodb:BatchWriteItem'
             - 'dynamodb:UpdateItem'
@@ -54,309 +24,88 @@ provider:
             - 'dynamodb:GetItem'
             - 'dynamodb:Query'
             - 'dynamodb:Scan'
-            - 's3:*'
+            - 's3:PutObject'
           Resource: "*"
 
 plugins:
   - serverless-appsync-plugin
 
 functions:
-  savvyAdminAuth:
-    handler: cognito_auth/handler.adminAuth
-    name: ${self:custom.projectName}_auth_${sls:stage}
+  demoPythonApp:
+    handler: handler/handler.lambda_handler
+    name: _demoPython
 
-  savvyAdminMonthlyTimeTrailQuestion:
-    handler: time_trial_question/controller/monthly/handler.monthlyHandler
-    name: ${self:custom.projectName}_${self:custom.monthlyTimeTrailQuestion}_${sls:stage}
-
-  playground:
-    handler: graphql-playground/handler.playgroundHandler
-    name: ${self:custom.projectName}_playground_${sls:stage}
-    events:
-      - http:
-          path: playground
-          method: get
-          cors: true
 
 
 resources:
   Resources:
-    UserPool:
-      Type: AWS::Cognito::UserPool
+    demo:
+      Type: AWS::DynamoDB::Table
       Properties:
-        UserPoolName: ${self:custom.projectName}_${sls:stage}_cognito_user_pool
-        Schema:
-          - Name: email
-            Required: true
-            Mutable: true
-          - AttributeDataType: "String"
-            Name: "birth_year"
-            Required: false
-            Mutable: true
-          - AttributeDataType: "Boolean"
-            Name: "contract"
-            Required: false
-            Mutable: true
-          - AttributeDataType: "DateTime"
-            Name: "created_at"
-            Required: false
-            Mutable: true
-        UsernameAttributes:
-          - email
-        UsernameConfiguration:
-          CaseSensitive: false
-        Policies:
-          PasswordPolicy:
-            MinimumLength: 8
-            RequireNumbers: true
-        AutoVerifiedAttributes: ["email"]
-
-    UserClient:
-      Type: AWS::Cognito::UserPoolClient
-      Properties:
-        ClientName: ${self:custom.projectName}_${sls:stage}_user_pool_client_id
-        GenerateSecret: false
-        UserPoolId: { Ref: UserPool }
-        AccessTokenValidity: 1
-        IdTokenValidity: 1
-        TokenValidityUnits:
-          AccessToken: "days"
-          IdToken: "days"
-        ExplicitAuthFlows:
-          - ALLOW_USER_PASSWORD_AUTH
-          - ALLOW_REFRESH_TOKEN_AUTH
-
-    UserIdentityPool:
-      Type: AWS::Cognito::IdentityPool
-      Properties: 
-        AllowClassicFlow: false
-        AllowUnauthenticatedIdentities: false
-        CognitoIdentityProviders: 
-          - ClientId: 
-              Ref: UserClient
-            ProviderName: 
-              Fn::GetAtt: [ "UserPool", "ProviderName" ]
-        IdentityPoolName: ${self:custom.projectName}_${sls:stage}
-
-    IdentityPoolRoleAttachment:
-      Type: AWS::Cognito::IdentityPoolRoleAttachment
-      Properties: 
-        IdentityPoolId: 
-          Ref: UserIdentityPool
-        RoleMappings:
-          "cognitoUserPoolConfig": 
-            IdentityProvider: !Join
-              - ''
-              - - 'cognito-idp'
-                - '.'
-                - Ref: AWS::Region
-                - '.'
-                - 'amazonaws.com'
-                - '/'
-                - Ref: UserPool
-                - ':'
-                - Ref: UserClient
-            AmbiguousRoleResolution: Deny 
-            Type: Token 
-        Roles:
-          "authenticated": !GetAtt [CognitoAuthRole, Arn]
-
-    CognitoAuthRole:
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: 'Allow'
-              Principal:
-                Federated: 'cognito-identity.amazonaws.com'
-              Action:
-                - 'sts:AssumeRoleWithWebIdentity'
-              Condition:
-                StringEquals:
-                  'cognito-identity.amazonaws.com:aud': !Ref UserIdentityPool
-                'ForAnyValue:StringLike':
-                  'cognito-identity.amazonaws.com:amr': authenticated
-        Policies:
-          - PolicyName: 'CognitoAuthorizedPolicy'
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'mobileanalytics:PutEvents'
-                    - 'cognito-sync:*'
-                    - 'cognito-identity:*'
-                  Resource: '*'
-
-    CognitoAdminAuthRole:
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: 'Allow'
-              Principal:
-                Federated: 'cognito-identity.amazonaws.com'
-              Action:
-                - 'sts:AssumeRoleWithWebIdentity'
-              Condition:
-                StringEquals:
-                  'cognito-identity.amazonaws.com:aud': !Ref UserIdentityPool
-                'ForAnyValue:StringLike':
-                  'cognito-identity.amazonaws.com:amr': authenticated
-        Policies:
-          - PolicyName: 'CognitoAdminAuthorizedPolicy'
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'appsync:GraphQL'
-                  Resource: 
-                  - !Join  
-                    - ''
-                    - - ${self:provider.environment.aws_iam_appsync_query_resource}
-                      - '*'
-                  - !Join  
-                    - ''
-                    - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                      - '*'
-                  # - !Join  
-                  #   - ''
-                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                  #     - 'regenerateCognitoUserIdentities'
-                  # - !Join  
-                  #   - ''
-                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                  #     - 'refreshUserIdToken'
-                  # - !Join  
-                  #   - ''
-                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                  #     - 'registerNewUser'
-                  # - !Join  
-                  #   - ''
-                  #   - - ${self:provider.environment.aws_iam_appsync_mutation_resource}
-                  #     - 'createMonthlyTimerTrialQuestionTheme'           
-        
-    UserPoolGroups:
-      Type: AWS::Cognito::UserPoolGroup
-      Properties: 
-        Description: "admin will get all access"
-        GroupName: admin
-        RoleArn: !GetAtt [CognitoAdminAuthRole, Arn]
-        UserPoolId: 
-          Ref: UserPool
-
-    UserPoolUser:
-      Type: AWS::Cognito::UserPoolUser
-      Properties: 
-        # ClientMetadata: Json
-        DesiredDeliveryMediums: 
-          - EMAIL
-        # ForceAliasCreation: Boolean
-        MessageAction: SUPPRESS
-        UserAttributes: 
-          - Name: email
-            Value: "armanazad.sakib@gmail.com"
-        Username: "armanazad.sakib@gmail.com"
-        UserPoolId: 
-          Ref: UserPool
-        # ValidationData: 
-        #   - AttributeType
-
-    UserPoolUserToGroupAttachment:
-      Type: AWS::Cognito::UserPoolUserToGroupAttachment
-      Properties: 
-        GroupName: "admin"
-        Username: "armanazad.sakib@gmail.com"
-        UserPoolId: 
-          Ref: UserPool
+        TableName: demoPythonApp
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK # partition key
+            KeyType: HASH
+          - AttributeName: SK # sort key
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
 
 
 
 
 custom:
-  projectName: savvy_admin
-  monthlyTimeTrailQuestion: monthly_time_trial_question
+  projectName: demoPythonApp
   # customBucketName: savvy-backend-resource-bucket
   appSync:
     name: ${self:custom.projectName}_appsync
     # authenticationType: API_KEY
-    authenticationType: AWS_IAM
-    additionalAuthenticationProviders:
-      - authenticationType: API_KEY
-      - authenticationType: AMAZON_COGNITO_USER_POOLS
-        userPoolConfig:
-          awsRegion: us-east-1
-          userPoolId: ${self:provider.environment.user_pool_id}
+    authenticationType: API_KEY
+    # additionalAuthenticationProviders:
+    #   - authenticationType: API_KEY
+    #   - authenticationType: AMAZON_COGNITO_USER_POOLS
+    #     userPoolConfig:
+    #       awsRegion: us-east-1
+    #       userPoolId: ${self:provider.environment.user_pool_id}
     mappingTemplates:
-      # authentication query configuration 
       - type: Query
-        field: loginUser
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      - type: Query
-        field: logoutUser
-        dataSource: savvy_admin_appsync_data_source
+        field: demoPythonApp
+        dataSource: create_demoPythonDataSource
         request: false
         response: false
 
-      # authentication mutation configuration 
       - type: Mutation
-        field: registerNewUser
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      - type: Mutation
-        field: regenerateIamUserIdentities
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      - type: Mutation
-        field: regenerateCognitoUserIdentities
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      - type: Mutation
-        field: refreshUserIdToken
-        dataSource: savvy_admin_appsync_data_source
-        request: false
-        response: false
-      
-      # time trail monthly theme query configuration 
-      - type: Query
-        field: getMonthlyTimerTrialQuestionTheme
-        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
-        request: false
-        response: false
-      - type: Query
-        field: getMonthlyTimerTrialQuestionThemeList
-        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        field: demoPythonApp
+        dataSource: create_demoPythonDataSource
         request: false
         response: false
 
-      # time trail monthly theme mutation configuration 
       - type: Mutation
-        field: createMonthlyTimerTrialQuestionTheme
-        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
-        request: false
-        response: false
-      - type: Mutation
-        field: updateMonthlyTimerTrialQuestionTheme
-        dataSource: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
+        field: demoUpdatePythonApp
+        dataSource: create_demoPythonDataSource
         request: false
         response: false
 
-    dataSources:        
+      - type: Mutation
+        field: deleteUser
+        dataSource: create_demoPythonDataSource
+        request: false
+        response: false
+    dataSources:
       - type: AWS_LAMBDA
-        name: savvy_admin_appsync_data_source
+        name: create_demoPythonDataSource
         config:
-          functionName: savvyAdminAuth
-      - type: AWS_LAMBDA
-        name: savvy_admin_appsync_${self:custom.monthlyTimeTrailQuestion}_source
-        config:
-          functionName: savvyAdminMonthlyTimeTrailQuestion
+          functionName: demoPythonApp
+
+
+          # sls deploy
+          # sls logs --function [function name ]
+          # sls deploy function --function demoApp
+          # sls info
+          # da2-fqpvbosgh5a3jkqxpnduf7miqi //api_key
