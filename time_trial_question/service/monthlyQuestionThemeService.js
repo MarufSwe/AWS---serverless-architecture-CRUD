@@ -6,7 +6,7 @@ const { getCognitoIUseByUUID } = require("./cognitoUserService");
 const { checkEmptyRecord, isMonthly, getUserUUID, isEmptyCheck } = require("../utils/helpers");
 const getSubCategoryItem = require("../repository/getSubCategoryItem");
 const putMonthlyThemeItem = require("../repository/putMonthlyThemeItem");
-const updateMonthlyCategoryItem = require("../repository/updateMonthlyCategoryItem");
+const updateMonthlyThemeItem = require("../repository/updateMonthlyThemeItem");
 const getMonthlyThemeItem = require("../repository/getMonthlyThemeItem");
 const queryMonthlyThemeItem = require("../repository/queryMonthlyTheme");
 const updateSubCategoryItem = require("../repository/updateSubCategoryItem");
@@ -57,7 +57,7 @@ module.exports = {
 
             const splitThemePrimaryKey = themePrimaryKey.split("#");
 
-            await DYNAMODB_DOC_CLIENT.send(updateMonthlyCategoryItem({
+            await DYNAMODB_DOC_CLIENT.send(updateMonthlyThemeItem({
                 PK: `${splitThemePrimaryKey[1] ?? ''}#${splitThemePrimaryKey[2] ?? ''}`,
                 SK: themePrimaryKey,
                 backgroundImage,
@@ -121,7 +121,7 @@ module.exports = {
                 totalItem: paginatedItems.length,
                 currentPageNumber: pageNumber,
                 from: ((pageNumber - 1) * perPage) + 1,
-                to: ((pageNumber - 1) * perPage) + 1 === paginatedItems.length ? paginatedItems.length : pageNumber * perPage,
+                to: ((pageNumber - 1) * perPage) + 1 === paginatedItems.length ? pageNumber * perPage : paginatedItems.length,
                 items: paginatedItems.slice(((pageNumber - 1) * perPage), pageNumber * perPage)
             }
 

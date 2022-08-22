@@ -1,7 +1,7 @@
 const { UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const { isEmptyCheck } = require("../utils/helpers");
 
-const updateMonthlyCategoryItem = ({
+const updateMonthlyThemeItem = ({
     PK,
     SK,
     status = null,
@@ -110,4 +110,4 @@ const updateMonthlyCategoryItem = ({
     return new UpdateCommand(updateAttributes)
 }
 
-module.exports = updateMonthlyCategoryItem
+module.exports = updateMonthlyThemeItem
