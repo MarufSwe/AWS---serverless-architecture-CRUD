@@ -8,6 +8,7 @@ def lambda_handler(event, context):
     demoPythonApp = boto3.resource('dynamodb')
     table = demoPythonApp.Table('demoPythonApp')
 
+    # for create user
     if event['info']['fieldName'] == "demoPythonApp":
         print('this is EventInfo==', event['info']['fieldName'])
         table.put_item(
@@ -22,6 +23,7 @@ def lambda_handler(event, context):
         )
         return {'message': 'Data inserted successfully!!'}
 
+    # for update user
     elif event['info']['fieldName'] == "demoUpdatePythonApp":
         table.update_item(
             Key={
@@ -42,6 +44,7 @@ def lambda_handler(event, context):
         )
         return {"message": "Data updated successfully!!"}
 
+    # for delete user
     elif event['info']['fieldName'] == "deleteUser":
         table.delete_item(
             Key={
